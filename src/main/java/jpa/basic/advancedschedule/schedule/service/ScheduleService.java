@@ -1,6 +1,7 @@
 package jpa.basic.advancedschedule.schedule.service;
 
 import jakarta.validation.Valid;
+import jpa.basic.advancedschedule.config.PasswordEncoder;
 import jpa.basic.advancedschedule.exception.CustomException;
 import jpa.basic.advancedschedule.exception.ErrorCode;
 import jpa.basic.advancedschedule.schedule.dto.*;
@@ -22,6 +23,7 @@ public class ScheduleService {
 
     private final ScheduleRepository scheduleRepository;
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public CreateScheduleResponse save(Long userId, CreateScheduleRequest request) {
@@ -76,7 +78,7 @@ public class ScheduleService {
         User user = userRepository.findById(loginUserId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        if (!ObjectUtils.nullSafeEquals(user.getPassword(), request.password())) {
+        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
             throw new CustomException(ErrorCode.PASSWORD_MISMATCH);
         }
 

@@ -28,7 +28,7 @@ public class User extends BaseEntity {
 
     @NotBlank(message = "이메일은 필수값입니다.")
     @Email(message = "이메일 형식이 올바르지 않습니다.")
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String email;
 
     @NotBlank(message = "비밀번호는 필수값입니다.")

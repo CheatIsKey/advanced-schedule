@@ -44,7 +44,7 @@ public class UserService {
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new CustomException(ErrorCode.LOGIN_FAILED));
 
-        if (!ObjectUtils.nullSafeEquals(user.getPassword(), request.password())) {
+        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
             throw new CustomException(ErrorCode.LOGIN_FAILED);
         }
 
@@ -80,7 +80,7 @@ public class UserService {
         /**
          * 세션이 같더라도, 비밀번호를 한 번 더 검증해서 보안을 올린다.
          */
-        if (!ObjectUtils.nullSafeEquals(user.getPassword(), request.password())) {
+        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
             throw new CustomException(ErrorCode.PASSWORD_MISMATCH);
         }
 
@@ -98,7 +98,7 @@ public class UserService {
             throw new CustomException(ErrorCode.ACCESS_DENIED);
         }
 
-        if (!ObjectUtils.nullSafeEquals(user.getPassword(), request.password())) {
+        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
             throw new CustomException(ErrorCode.PASSWORD_MISMATCH);
         }
 

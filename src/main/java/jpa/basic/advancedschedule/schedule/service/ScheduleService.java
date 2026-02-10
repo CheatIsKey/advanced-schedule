@@ -11,6 +11,7 @@ import jpa.basic.advancedschedule.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 
 import java.util.List;
 
@@ -50,9 +51,13 @@ public class ScheduleService {
     }
 
     @Transactional
-    public UpdateScheduleResponse update(Long scheduleId, @Valid UpdateScheduleRequest request) {
+    public UpdateScheduleResponse update(Long scheduleId, @Valid UpdateScheduleRequest request, Long userId) {
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new CustomException(ErrorCode.SCHEDULE_NOT_FOUND));
+
+        if (!schedule.getUser().getId().equals(userId)) {
+            throw new CustomException(ErrorCode.ACCESS_DENIED);
+        }
 
         schedule.change(request.author(), request.title(), request.content());
 
@@ -60,9 +65,20 @@ public class ScheduleService {
     }
 
     @Transactional
-    public DeleteScheduleResponse delete(Long scheduleId) {
+    public DeleteScheduleResponse delete(Long scheduleId, @Valid DeleteScheduleRequest request, Long loginUserId) {
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new CustomException(ErrorCode.SCHEDULE_NOT_FOUND));
+
+        if (!schedule.getUser().getId().equals(loginUserId)) {
+            throw new CustomException(ErrorCode.ACCESS_DENIED);
+        }
+
+        User user = userRepository.findById(loginUserId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        if (!ObjectUtils.nullSafeEquals(user.getPassword(), request.password())) {
+            throw new CustomException(ErrorCode.PASSWORD_MISMATCH);
+        }
 
         DeleteScheduleResponse dto = DeleteScheduleResponse.from(schedule, "삭제가 완료되었습니다.");
 

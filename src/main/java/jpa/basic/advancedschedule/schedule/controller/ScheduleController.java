@@ -1,6 +1,9 @@
 package jpa.basic.advancedschedule.schedule.controller;
 
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
+import jpa.basic.advancedschedule.exception.CustomException;
+import jpa.basic.advancedschedule.exception.ErrorCode;
 import jpa.basic.advancedschedule.schedule.dto.*;
 import jpa.basic.advancedschedule.schedule.service.ScheduleService;
 import lombok.RequiredArgsConstructor;
@@ -37,8 +40,14 @@ public class ScheduleController {
 
     @PatchMapping("/{scheduleId}")
     public ResponseEntity<UpdateScheduleResponse> updateSchedule(
-            @PathVariable Long scheduleId, @Valid @RequestBody UpdateScheduleRequest request) {
-        return ResponseEntity.status(HttpStatus.OK).body(scheduleService.update(scheduleId, request));
+            @PathVariable Long scheduleId, @Valid @RequestBody UpdateScheduleRequest request,
+            @SessionAttribute(name = "userId", required = false) Long userId) {
+
+        if (userId == null) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(scheduleService.update(scheduleId, request, userId));
     }
 
     /**
@@ -51,7 +60,16 @@ public class ScheduleController {
      */
     @DeleteMapping("/{scheduleId}")
     public ResponseEntity<DeleteScheduleResponse> deleteSchedule(
-            @PathVariable Long scheduleId) {
-        return ResponseEntity.status(HttpStatus.OK).body(scheduleService.delete(scheduleId));
+            @PathVariable Long scheduleId,
+            @Valid @RequestBody DeleteScheduleRequest request,
+            @SessionAttribute(name = "userId", required = false) Long loginUserId) {
+
+        if (loginUserId == null) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
+        }
+
+        DeleteScheduleResponse dto = scheduleService.delete(scheduleId, request, loginUserId);
+
+        return ResponseEntity.status(HttpStatus.OK).body(dto);
     }
 }

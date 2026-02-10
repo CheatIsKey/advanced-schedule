@@ -12,6 +12,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    /**
+     * Enum으로 지정한 예외들 중 선택해서 상황에 따라 다르게 출력
+     *
+     * @param exception : 예외가 발생해서 들어온 예외들
+     * @return : 보기 쉽게 가공해서 전달
+     */
     @ExceptionHandler(CustomException.class)
     public ResponseEntity<ExceptionResponseDto> handleException(CustomException exception) {
         ErrorCode errorCode = exception.getErrorCode();

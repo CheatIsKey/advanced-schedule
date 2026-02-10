@@ -1,0 +1,73 @@
+package jpa.basic.advancedschedule.schedule.service;
+
+import jakarta.validation.Valid;
+import jpa.basic.advancedschedule.exception.CustomException;
+import jpa.basic.advancedschedule.exception.ErrorCode;
+import jpa.basic.advancedschedule.schedule.dto.*;
+import jpa.basic.advancedschedule.schedule.entity.Schedule;
+import jpa.basic.advancedschedule.schedule.repository.ScheduleRepository;
+import jpa.basic.advancedschedule.user.entity.User;
+import jpa.basic.advancedschedule.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class ScheduleService {
+
+    private final ScheduleRepository scheduleRepository;
+    private final UserRepository userRepository;
+
+    @Transactional
+    public CreateScheduleResponse save(Long userId, CreateScheduleRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        Schedule schedule = Schedule.createSchedule(request, user);
+
+        Schedule savedSchedule = scheduleRepository.save(schedule);
+
+        return CreateScheduleResponse.from(savedSchedule);
+    }
+
+    public List<ReadSchedulesResponse> getAll() {
+        List<Schedule> schedules = scheduleRepository.findAll();
+
+        return schedules.stream()
+                .map(ReadSchedulesResponse::from)
+                .toList();
+    }
+
+    public ReadScheduleResponse getOne(Long scheduleId) {
+        Schedule schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new CustomException(ErrorCode.SCHEDULE_NOT_FOUND));
+
+        return ReadScheduleResponse.from(schedule);
+    }
+
+    @Transactional
+    public UpdateScheduleResponse update(Long scheduleId, @Valid UpdateScheduleRequest request) {
+        Schedule schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new CustomException(ErrorCode.SCHEDULE_NOT_FOUND));
+
+        schedule.change(request.author(), request.title(), request.content());
+
+        return UpdateScheduleResponse.from(schedule);
+    }
+
+    @Transactional
+    public DeleteScheduleResponse delete(Long scheduleId) {
+        Schedule schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new CustomException(ErrorCode.SCHEDULE_NOT_FOUND));
+
+        DeleteScheduleResponse dto = DeleteScheduleResponse.from(schedule, "삭제가 완료되었습니다.");
+
+        scheduleRepository.deleteById(scheduleId);
+
+        return dto;
+    }
+}

@@ -20,6 +20,7 @@ public enum ErrorCode {
 
 //    댓글 관련 에러 코드("C###")
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "C001", "해당 댓글은 존재하지 않습니다."),
+    COMMENT_NOT_IN_SCHEDULE(HttpStatus.NOT_FOUND, "C002", "해당 일정에 속한 댓글이 아닙니다."),
 
 //    로그인 관련 에러 코드("L###")
     LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "L001", "이메일 또는 비밀번호가 일치하지 않습니다.");

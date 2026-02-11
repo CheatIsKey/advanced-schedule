@@ -1,6 +1,9 @@
 package jpa.basic.advancedschedule.schedule.service;
 
 import jakarta.validation.Valid;
+import jpa.basic.advancedschedule.comment.dto.ReadCommentsResponse;
+import jpa.basic.advancedschedule.comment.entity.Comment;
+import jpa.basic.advancedschedule.comment.repository.CommentRepository;
 import jpa.basic.advancedschedule.config.PasswordEncoder;
 import jpa.basic.advancedschedule.exception.CustomException;
 import jpa.basic.advancedschedule.exception.ErrorCode;
@@ -23,6 +26,7 @@ public class ScheduleService {
 
     private final ScheduleRepository scheduleRepository;
     private final UserRepository userRepository;
+    private final CommentRepository commentRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
@@ -49,7 +53,13 @@ public class ScheduleService {
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new CustomException(ErrorCode.SCHEDULE_NOT_FOUND));
 
-        return ReadScheduleResponse.from(schedule);
+        List<Comment> comments = commentRepository.findAllByScheduleId(scheduleId);
+
+        List<ReadCommentsResponse> dto = comments.stream()
+                .map(ReadCommentsResponse::from)
+                .toList();
+
+        return ReadScheduleResponse.from(schedule, dto);
     }
 
     @Transactional

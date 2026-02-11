@@ -13,9 +13,10 @@ import jpa.basic.advancedschedule.schedule.repository.ScheduleRepository;
 import jpa.basic.advancedschedule.user.entity.User;
 import jpa.basic.advancedschedule.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.ObjectUtils;
 
 import java.util.List;
 
@@ -41,12 +42,9 @@ public class ScheduleService {
         return CreateScheduleResponse.from(savedSchedule);
     }
 
-    public List<ReadSchedulesResponse> getAll() {
-        List<Schedule> schedules = scheduleRepository.findAll();
-
-        return schedules.stream()
-                .map(ReadSchedulesResponse::from)
-                .toList();
+    public Page<ReadSchedulesResponse> getAll(Pageable pageable) {
+//        List<Schedule> schedules = scheduleRepository.findAll();
+        return scheduleRepository.findAllWithCommentsCount(pageable);
     }
 
     public ReadScheduleResponse getOne(Long scheduleId) {

@@ -8,18 +8,20 @@ import java.time.LocalDateTime;
 @Builder
 public record ReadSchedulesResponse(
         Long id,
-        String author,
         String title,
         String content,
+        String author,
+        Long commentsCount,
         LocalDateTime createdAt,
         LocalDateTime modifiedAt
 ) {
-    public static ReadSchedulesResponse from(Schedule schedule) {
+    public static ReadSchedulesResponse from(Schedule schedule, Long count) {
         return ReadSchedulesResponse.builder()
                 .id(schedule.getId())
-                .author(schedule.getAuthor())
                 .title(schedule.getTitle())
                 .content(schedule.getContent())
+                .author(schedule.getAuthor())
+                .commentsCount(count)
                 .createdAt(schedule.getCreatedAt())
                 .modifiedAt(schedule.getModifiedAt())
                 .build();

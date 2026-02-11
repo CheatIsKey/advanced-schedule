@@ -1,17 +1,18 @@
 package jpa.basic.advancedschedule.schedule.controller;
 
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import jpa.basic.advancedschedule.exception.CustomException;
 import jpa.basic.advancedschedule.exception.ErrorCode;
 import jpa.basic.advancedschedule.schedule.dto.*;
 import jpa.basic.advancedschedule.schedule.service.ScheduleService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/schedules")
@@ -27,8 +28,9 @@ public class ScheduleController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ReadSchedulesResponse>> getSchedules() {
-        return ResponseEntity.status(HttpStatus.OK).body(scheduleService.getAll());
+    public ResponseEntity<Page<ReadSchedulesResponse>> getSchedules(
+            @PageableDefault(size = 10, page = 0, sort = "modifiedAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.status(HttpStatus.OK).body(scheduleService.getAll(pageable));
     }
 
     @GetMapping("/{scheduleId}")

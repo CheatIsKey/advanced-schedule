@@ -90,7 +90,6 @@
 | **Framework** | Spring Boot | **4.0.2** |
 | **Database** | MySQL | 8.0 / InnoDB |
 | **ORM** | Spring Data JPA | Hibernate Core (SoftDelete 지원) |
-| **Security** | BCrypt | Password Hashing (`at.favre.lib:bcrypt`) |
 | **Build Tool** | Gradle | 8.x |
 | **Dependencies** | Lombok, Validation | 코드 간소화 및 데이터 검증 |
 

@@ -1,6 +1,7 @@
 package jpa.basic.advancedschedule.schedule.controller;
 
 import jakarta.validation.Valid;
+import jpa.basic.advancedschedule.exception.ApiResponse;
 import jpa.basic.advancedschedule.exception.CustomException;
 import jpa.basic.advancedschedule.exception.ErrorCode;
 import jpa.basic.advancedschedule.schedule.dto.*;
@@ -22,34 +23,43 @@ public class ScheduleController {
     private final ScheduleService scheduleService;
 
     @PostMapping("/{userId}")
-    public ResponseEntity<CreateScheduleResponse> addSchedule(
-            @PathVariable Long userId, @Valid @RequestBody CreateScheduleRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(scheduleService.save(userId, request));
-    }
+    public ResponseEntity<ApiResponse<CreateScheduleResponse>> addSchedule(
+            @PathVariable Long userId, @Valid @RequestBody CreateScheduleRequest request,
+            @SessionAttribute(name = "userId", required = false) Long loginUserId) {
 
-    @GetMapping
-    public ResponseEntity<Page<ReadSchedulesResponse>> getSchedules(
-            @PageableDefault(size = 10, page = 0, sort = "modifiedAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.status(HttpStatus.OK).body(scheduleService.getAll(pageable));
-    }
-
-    @GetMapping("/{scheduleId}")
-    public ResponseEntity<ReadScheduleResponse> getSchedule(
-            @PathVariable Long scheduleId
-    ) {
-        return ResponseEntity.status(HttpStatus.OK).body(scheduleService.getOne(scheduleId));
-    }
-
-    @PatchMapping("/{scheduleId}")
-    public ResponseEntity<UpdateScheduleResponse> updateSchedule(
-            @PathVariable Long scheduleId, @Valid @RequestBody UpdateScheduleRequest request,
-            @SessionAttribute(name = "userId", required = false) Long userId) {
-
-        if (userId == null) {
+        if (loginUserId == null) {
             throw new CustomException(ErrorCode.UNAUTHORIZED);
         }
 
-        return ResponseEntity.status(HttpStatus.OK).body(scheduleService.update(scheduleId, request, userId));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(HttpStatus.CREATED, scheduleService.save(userId, request)));
+    }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<Page<ReadSchedulesResponse>>> getSchedules(
+            @PageableDefault(size = 10, page = 0, sort = "modifiedAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success(HttpStatus.OK, scheduleService.getAll(pageable)));
+    }
+
+    @GetMapping("/{scheduleId}")
+    public ResponseEntity<ApiResponse<ReadScheduleResponse>> getSchedule(
+            @PathVariable Long scheduleId
+    ) {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success(HttpStatus.OK, scheduleService.getOne(scheduleId)));
+    }
+
+    @PatchMapping("/{scheduleId}")
+    public ResponseEntity<ApiResponse<UpdateScheduleResponse>> updateSchedule(
+            @PathVariable Long scheduleId, @Valid @RequestBody UpdateScheduleRequest request,
+            @SessionAttribute(name = "userId", required = false) Long loginUserId) {
+
+        if (loginUserId == null) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(HttpStatus.OK, scheduleService.update(scheduleId, request, loginUserId)));
     }
 
     /**
@@ -61,7 +71,7 @@ public class ScheduleController {
      * @return : 간단한 필드만 JSON으로 담아서 반환
      */
     @DeleteMapping("/{scheduleId}")
-    public ResponseEntity<DeleteScheduleResponse> deleteSchedule(
+    public ResponseEntity<ApiResponse<DeleteScheduleResponse>> deleteSchedule(
             @PathVariable Long scheduleId,
             @Valid @RequestBody DeleteScheduleRequest request,
             @SessionAttribute(name = "userId", required = false) Long loginUserId) {
@@ -72,6 +82,7 @@ public class ScheduleController {
 
         DeleteScheduleResponse dto = scheduleService.delete(scheduleId, request, loginUserId);
 
-        return ResponseEntity.status(HttpStatus.OK).body(dto);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success(HttpStatus.OK, dto));
     }
 }

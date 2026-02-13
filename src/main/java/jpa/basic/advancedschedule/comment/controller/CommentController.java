@@ -3,6 +3,7 @@ package jpa.basic.advancedschedule.comment.controller;
 import jakarta.validation.Valid;
 import jpa.basic.advancedschedule.comment.dto.*;
 import jpa.basic.advancedschedule.comment.service.CommentService;
+import jpa.basic.advancedschedule.exception.ApiResponse;
 import jpa.basic.advancedschedule.exception.CustomException;
 import jpa.basic.advancedschedule.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +30,7 @@ public class CommentController {
      * @return : 댓글이 작성된 일정의 제목과 댓글 INFO가 담긴 DTO
      */
     @PostMapping
-    public ResponseEntity<CreateCommentResponse> addComment(
+    public ResponseEntity<ApiResponse<CreateCommentResponse>> addComment(
             @PathVariable Long scheduleId,
             @SessionAttribute(name = "userId", required = false) Long userId,
             @Valid @RequestBody CreateCommentRequest request) {
@@ -38,25 +39,28 @@ public class CommentController {
             throw new CustomException(ErrorCode.UNAUTHORIZED);
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(commentService.save(scheduleId, userId, request));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(HttpStatus.CREATED, commentService.save(scheduleId, userId, request)));
     }
 
     @GetMapping
-    public ResponseEntity<List<ReadCommentsResponse>> getComments(
+    public ResponseEntity<ApiResponse<List<ReadCommentsResponse>>> getComments(
             @PathVariable Long scheduleId
     ) {
-        return ResponseEntity.status(HttpStatus.OK).body(commentService.getAll(scheduleId));
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success(HttpStatus.OK, commentService.getAll(scheduleId)));
     }
 
     @GetMapping("/{commentId}")
-    public ResponseEntity<ReadCommentResponse> getComment(
+    public ResponseEntity<ApiResponse<ReadCommentResponse>> getComment(
             @PathVariable Long commentId
     ) {
-        return ResponseEntity.status(HttpStatus.OK).body(commentService.getOne(commentId));
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success(HttpStatus.OK, commentService.getOne(commentId)));
     }
 
     @PatchMapping("/{commentId}")
-    public ResponseEntity<UpdateCommentResponse> updateComment(
+    public ResponseEntity<ApiResponse<UpdateCommentResponse>> updateComment(
             @PathVariable Long scheduleId,
             @PathVariable Long commentId,
             @Valid @RequestBody UpdateCommentRequest request,
@@ -67,11 +71,12 @@ public class CommentController {
             throw new CustomException(ErrorCode.UNAUTHORIZED);
         }
 
-        return ResponseEntity.status(HttpStatus.OK).body(commentService.update(scheduleId, commentId, userId, request));
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success(HttpStatus.OK, commentService.update(scheduleId, commentId, userId, request)));
     }
 
     @DeleteMapping("/{commentId}")
-    public ResponseEntity<DeleteCommentResponse> deleteComment(
+    public ResponseEntity<ApiResponse<DeleteCommentResponse>> deleteComment(
             @PathVariable Long scheduleId,
             @PathVariable Long commentId,
             @SessionAttribute(name = "userId", required = false) Long userId
@@ -81,6 +86,7 @@ public class CommentController {
             throw new CustomException(ErrorCode.UNAUTHORIZED);
         }
 
-        return ResponseEntity.status(HttpStatus.OK).body(commentService.delete(scheduleId, commentId, userId));
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success(HttpStatus.OK, commentService.delete(scheduleId, commentId, userId)));
     }
 }

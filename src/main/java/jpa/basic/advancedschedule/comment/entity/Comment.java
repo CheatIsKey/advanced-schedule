@@ -1,8 +1,6 @@
 package jpa.basic.advancedschedule.comment.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import jpa.basic.advancedschedule.config.BaseEntity;
 import jpa.basic.advancedschedule.schedule.entity.Schedule;
 import jpa.basic.advancedschedule.user.entity.User;
@@ -22,8 +20,6 @@ public class Comment extends BaseEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "댓글 내용은 필수값입니다.")
-    @Size(max = 50, message = "댓글 내용은 최대 50자까지 가능합니다.")
     @Column(length = 50, nullable = false)
     private String content;
 

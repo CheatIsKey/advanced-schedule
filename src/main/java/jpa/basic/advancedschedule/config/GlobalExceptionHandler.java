@@ -1,13 +1,12 @@
 package jpa.basic.advancedschedule.config;
 
-import jpa.basic.advancedschedule.exception.CustomException;
-import jpa.basic.advancedschedule.exception.ErrorCode;
-import jpa.basic.advancedschedule.exception.ExceptionResponseDto;
-import org.springframework.http.HttpStatus;
+import jpa.basic.advancedschedule.exception.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.List;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -19,34 +18,24 @@ public class GlobalExceptionHandler {
      * @return : 보기 쉽게 가공해서 전달
      */
     @ExceptionHandler(CustomException.class)
-    public ResponseEntity<ExceptionResponseDto> handleException(CustomException exception) {
+    public ResponseEntity<ApiResponse<ErrorResponse>> handleException(CustomException exception) {
         ErrorCode errorCode = exception.getErrorCode();
 
         return ResponseEntity.status(errorCode.getStatus())
-                .body(ExceptionResponseDto.builder()
-                        .status(errorCode.getStatus().value())
-                        .errorCode(errorCode.getCode())
-                        .message(errorCode.getMessage())
-                        .build());
+                .body(ApiResponse.fail(errorCode));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ExceptionResponseDto> handleException(MethodArgumentNotValidException exception) {
+    public ResponseEntity<ApiResponse<ErrorResponse>> handleException(MethodArgumentNotValidException exception) {
         ErrorCode errorCode = ErrorCode.INVALID_INPUT_VALUE;
 
-        /**
-         * Bean Validation 유효성 검사 오류 중 첫 번째 에러 메시지 할당
-         */
-        String message = exception.getBindingResult()
-                .getAllErrors()
-                .get(0)
-                .getDefaultMessage();
+        List<FieldError> fieldErrors = exception.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(FieldError::from)
+                .toList();
 
         return ResponseEntity.status(errorCode.getStatus())
-                .body(ExceptionResponseDto.builder()
-                        .status(errorCode.getStatus().value())
-                        .errorCode(errorCode.getCode())
-                        .message(message)
-                        .build());
+                .body(ApiResponse.fail(errorCode, fieldErrors));
     }
 }

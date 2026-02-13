@@ -2,6 +2,7 @@ package jpa.basic.advancedschedule.user.controller;
 
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
+import jpa.basic.advancedschedule.exception.ApiResponse;
 import jpa.basic.advancedschedule.exception.CustomException;
 import jpa.basic.advancedschedule.exception.ErrorCode;
 import jpa.basic.advancedschedule.user.dto.*;
@@ -21,13 +22,14 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping
-    public ResponseEntity<CreateUserResponse> addUser(
+    public ResponseEntity<ApiResponse<CreateUserResponse>> addUser(
             @Valid @RequestBody CreateUserRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(userService.save(request));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(HttpStatus.CREATED, userService.save(request)));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginUserResponse> login(
+    public ResponseEntity<ApiResponse<LoginUserResponse>> login(
             @Valid @RequestBody LoginUserRequest request, HttpSession session) {
         LoginUserResponse dto = userService.login(request);
 
@@ -37,22 +39,24 @@ public class UserController {
          */
         session.setAttribute("userId", dto.id());
 
-        return ResponseEntity.ok(dto);
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(HttpStatus.OK, dto));
     }
 
     @GetMapping
-    public ResponseEntity<List<ReadUsersResponse>> getUser() {
-        return ResponseEntity.status(HttpStatus.OK).body(userService.getAll());
+    public ResponseEntity<ApiResponse<List<ReadUsersResponse>>> getUser() {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success(HttpStatus.OK, userService.getAll()));
     }
 
     @GetMapping("/{userId}")
-    public ResponseEntity<ReadUserResponse> getUser(
+    public ResponseEntity<ApiResponse<ReadUserResponse>> getUser(
             @PathVariable Long userId) {
-        return ResponseEntity.status(HttpStatus.OK).body(userService.getOne(userId));
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success(HttpStatus.OK, userService.getOne(userId)));
     }
 
     @PatchMapping("/{userId}")
-    public ResponseEntity<UpdateUserResponse> updateUser(
+    public ResponseEntity<ApiResponse<UpdateUserResponse>> updateUser(
             @PathVariable Long userId,
             @Valid @RequestBody UpdateUserRequest request,
             @SessionAttribute(name = "userId", required = false) Long loginUserId) {
@@ -61,11 +65,12 @@ public class UserController {
             throw new CustomException(ErrorCode.UNAUTHORIZED);
         }
 
-        return ResponseEntity.status(HttpStatus.OK).body(userService.update(userId, request, loginUserId));
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success(HttpStatus.OK, userService.update(userId, request, loginUserId)));
     }
 
     @DeleteMapping("/{userId}")
-    public ResponseEntity<DeleteUserReponse> deleteUser(
+    public ResponseEntity<ApiResponse<DeleteUserReponse>> deleteUser(
             @PathVariable Long userId,
             @RequestBody DeleteUserRequest request,
             @SessionAttribute(name = "userId",  required = false) Long loginUserId,
@@ -79,6 +84,7 @@ public class UserController {
 
         session.invalidate();
 
-        return ResponseEntity.status(HttpStatus.OK).body(dto);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success(HttpStatus.OK, dto));
     }
 }

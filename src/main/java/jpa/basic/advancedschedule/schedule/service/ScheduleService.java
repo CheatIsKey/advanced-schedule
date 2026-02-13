@@ -3,7 +3,7 @@ package jpa.basic.advancedschedule.schedule.service;
 import jakarta.validation.Valid;
 import jpa.basic.advancedschedule.comment.dto.ReadCommentsResponse;
 import jpa.basic.advancedschedule.comment.entity.Comment;
-import jpa.basic.advancedschedule.comment.repository.CommentRepository;
+import jpa.basic.advancedschedule.comment.service.CommentService;
 import jpa.basic.advancedschedule.config.PasswordEncoder;
 import jpa.basic.advancedschedule.exception.CustomException;
 import jpa.basic.advancedschedule.exception.ErrorCode;
@@ -11,7 +11,7 @@ import jpa.basic.advancedschedule.schedule.dto.*;
 import jpa.basic.advancedschedule.schedule.entity.Schedule;
 import jpa.basic.advancedschedule.schedule.repository.ScheduleRepository;
 import jpa.basic.advancedschedule.user.entity.User;
-import jpa.basic.advancedschedule.user.repository.UserRepository;
+import jpa.basic.advancedschedule.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,14 +26,13 @@ import java.util.List;
 public class ScheduleService {
 
     private final ScheduleRepository scheduleRepository;
-    private final UserRepository userRepository;
-    private final CommentRepository commentRepository;
+    private final UserService userService;
+    private final CommentService  commentService;
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public CreateScheduleResponse save(Long userId, CreateScheduleRequest request) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user = userService.getUser(userId);
 
         Schedule schedule = Schedule.createSchedule(request, user);
 
@@ -43,7 +42,6 @@ public class ScheduleService {
     }
 
     public Page<ReadSchedulesResponse> getAll(Pageable pageable) {
-//        List<Schedule> schedules = scheduleRepository.findAll();
         return scheduleRepository.findAllWithCommentsCount(pageable);
     }
 
@@ -51,7 +49,7 @@ public class ScheduleService {
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new CustomException(ErrorCode.SCHEDULE_NOT_FOUND));
 
-        List<Comment> comments = commentRepository.findAllByScheduleId(scheduleId);
+        List<Comment> comments = commentService.getSchedule(scheduleId);
 
         List<ReadCommentsResponse> dto = comments.stream()
                 .map(ReadCommentsResponse::from)
@@ -83,8 +81,7 @@ public class ScheduleService {
             throw new CustomException(ErrorCode.ACCESS_DENIED);
         }
 
-        User user = userRepository.findById(loginUserId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user = userService.getUser(loginUserId);
 
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
             throw new CustomException(ErrorCode.PASSWORD_MISMATCH);
@@ -95,5 +92,23 @@ public class ScheduleService {
         scheduleRepository.deleteById(scheduleId);
 
         return dto;
+    }
+
+    public List<Schedule> getUserSchedules(Long userId) {
+        return scheduleRepository.findByUserId(userId);
+    }
+
+    @Transactional
+    public void deleteAllSchedules(List<Schedule> schedules) {
+        scheduleRepository.deleteAll(schedules);
+    }
+
+    public Schedule getSchedule(Long scheduleId) {
+        return scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new CustomException(ErrorCode.SCHEDULE_NOT_FOUND));
+    }
+
+    public boolean existsSchedule(Long scheduleId) {
+        return scheduleRepository.existsById(scheduleId);
     }
 }

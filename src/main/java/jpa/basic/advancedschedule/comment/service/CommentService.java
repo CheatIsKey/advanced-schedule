@@ -6,10 +6,10 @@ import jpa.basic.advancedschedule.comment.repository.CommentRepository;
 import jpa.basic.advancedschedule.exception.CustomException;
 import jpa.basic.advancedschedule.exception.ErrorCode;
 import jpa.basic.advancedschedule.schedule.entity.Schedule;
-import jpa.basic.advancedschedule.schedule.repository.ScheduleRepository;
+import jpa.basic.advancedschedule.schedule.service.ScheduleService;
 import jpa.basic.advancedschedule.user.entity.User;
-import jpa.basic.advancedschedule.user.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
+import jpa.basic.advancedschedule.user.service.UserService;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,20 +17,30 @@ import java.util.List;
 
 @Service
 @Transactional(readOnly = true)
-@RequiredArgsConstructor
+//@RequiredArgsConstructor
 public class CommentService {
 
     private final CommentRepository commentRepository;
-    private final ScheduleRepository scheduleRepository;
-    private final UserRepository userRepository;
+    private final ScheduleService scheduleService;
+    private final UserService userService;
+
+    /**
+     * 서비스 계층끼리 서로 의존하면서, 무한참조가 발생한다.
+     * 이때 프록시 전략으로, 그나마 더 중요한 빈을 먼저 만들도록, @Lazy로 대리 객체를 주입한다.
+     * 댓글은 일정이 있어야 존재하므로, 더 중요한 일정 빈을 먼저 작업한다.
+     * 해당 메서드가 호출될 때, 실제 객체를 가져온다.
+     */
+    public CommentService(CommentRepository commentRepository, @Lazy ScheduleService scheduleService, UserService userService) {
+        this.commentRepository = commentRepository;
+        this.scheduleService = scheduleService;
+        this.userService = userService;
+    }
 
     @Transactional
     public CreateCommentResponse save(Long scheduleId, Long userId, CreateCommentRequest request) {
-        Schedule schedule = scheduleRepository.findById(scheduleId)
-                .orElseThrow(() -> new CustomException(ErrorCode.SCHEDULE_NOT_FOUND));
+        Schedule schedule = scheduleService.getSchedule(scheduleId);
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user = userService.getUser(userId);
 
         Comment comment = Comment.builder()
                 .content(request.content())
@@ -43,7 +53,7 @@ public class CommentService {
     }
 
     public List<ReadCommentsResponse> getAll(Long scheduleId) {
-        if (!scheduleRepository.existsById(scheduleId)) {
+        if (!scheduleService.existsSchedule(scheduleId)) {
             throw new CustomException(ErrorCode.SCHEDULE_NOT_FOUND);
         }
 
@@ -63,7 +73,7 @@ public class CommentService {
 
     @Transactional
     public UpdateCommentResponse update(Long scheduleId, Long commentId, Long userId, UpdateCommentRequest request) {
-        if (!scheduleRepository.existsById(scheduleId)) {
+        if (!scheduleService.existsSchedule(scheduleId)) {
             throw new CustomException(ErrorCode.SCHEDULE_NOT_FOUND);
         }
 
@@ -88,7 +98,7 @@ public class CommentService {
 
     @Transactional
     public DeleteCommentResponse delete(Long scheduleId, Long commentId, Long userId) {
-        if (!scheduleRepository.existsById(scheduleId)) {
+        if (!scheduleService.existsSchedule(scheduleId)) {
             throw new CustomException(ErrorCode.SCHEDULE_NOT_FOUND);
         }
 
@@ -107,5 +117,9 @@ public class CommentService {
         commentRepository.delete(comment);
 
         return dto;
+    }
+
+    public List<Comment> getSchedule(Long scheduleId) {
+        return commentRepository.findAllByScheduleId(scheduleId);
     }
 }
